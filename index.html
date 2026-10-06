@@ -77,6 +77,21 @@
     background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;z-index:20;font-size:14px}
   .hide{display:none!important}
   #sub{margin-bottom:10px} #sub:empty{display:none}
+  nav .brand,nav .subn{display:none}
+  /* Màn rộng: thanh dưới biến thành panel trái, "Luyện" xổ mục con ngay trong panel */
+  @media (min-width:860px){
+    body{padding-bottom:24px;padding-left:240px}
+    nav{top:0;right:auto;width:240px;flex-direction:column;gap:4px;padding:18px 12px;border-top:0;border-right:1px solid var(--line);overflow-y:auto}
+    nav .brand{display:block;font-weight:800;font-size:18px;color:var(--accent);padding:0 12px 14px}
+    nav button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;font-size:15px;padding:10px 12px;border-radius:10px;text-align:left}
+    nav button span{font-size:20px}
+    nav button[aria-current="page"]{background:var(--accent-2)}
+    nav .subn{display:flex;flex-direction:column;gap:2px;margin:0 0 6px 30px;padding-left:10px;border-left:2px solid var(--line)}
+    nav .subn button{font-size:14px;padding:6px 10px;min-height:34px}
+    nav .subn button[aria-pressed="true"]{color:var(--accent);font-weight:700;background:var(--accent-3)}
+    #sub{display:none!important}
+    .toast{bottom:24px}
+  }
   .prose h3{font-size:18px;margin:16px 0 6px} .prose h4{font-size:16px;margin:12px 0 4px}
   .prose p{margin:6px 0} .prose ul{margin:6px 0;padding-left:22px}
   .prose .call{border-left:3px solid var(--accent);background:var(--accent-3);padding:8px 12px;border-radius:0 8px 8px 0;margin:8px 0}
@@ -221,8 +236,9 @@ function go(t){tab=t;location.hash=t;render();scrollTo(0,0)}
 function render(){
   const th=S.theme;if(th==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.dataset.theme=th;
   const inP=PRACT.some(p=>p[0]===tab);if(inP)lastP=tab;
-  $('#nav').innerHTML=NAV.map(([k,i,l])=>{const t=k==='PRACT'?lastP:k,cur=k==='PRACT'?inP:k===tab;
-    return `<button data-go="${t}" ${cur?'aria-current="page"':''}><span>${i}</span>${l}</button>`}).join('');
+  $('#nav').innerHTML='<div class="brand">🎓 Lò tiếng Anh</div>'+NAV.map(([k,i,l])=>{const t=k==='PRACT'?lastP:k,cur=k==='PRACT'?inP:k===tab;
+    return `<button data-go="${t}" ${cur?'aria-current="page"':''}><span>${i}</span>${l}</button>`+
+      (k==='PRACT'?`<div class="subn">${PRACT.map(([p,pl])=>`<button data-go="${p}" aria-pressed="${p===tab}">${pl}</button>`).join('')}</div>`:'')}).join('');
   $('#sub').innerHTML=inP?PRACT.map(([k,l])=>`<button class="sm" data-go="${k}" aria-pressed="${k===tab}">${l}</button>`).join(''):'';
   $('#app').onclick=null;VIEWS[tab]();
 }
