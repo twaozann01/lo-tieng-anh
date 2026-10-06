@@ -1,0 +1,2 @@
+# File sao lưu xuất từ Cài đặt chứa dữ liệu học cá nhân, không đẩy lên repo public
+backup/*.json
