@@ -265,13 +265,72 @@ function vHome(){
     return `<div class="row" style="margin:4px 0"><span class="muted" style="width:92px;font-size:13px">Hộp ${b} · ${g}d</span><div class="bar sp"><i style="width:${n?c/n*100:0}%"></i></div><b style="width:28px;text-align:right">${c}</b></div>`}).join('')}</div>`;
 }
 
+/* ===== Kho từ theo mức: mỗi gói là một nhóm đã dạy, bấm để thêm vào thư viện ===== */
+/* Dòng từ: en | phiên âm | nghĩa | ví dụ. Muốn thêm gói mới: thêm một object vào PACKS (id không trùng). */
+const PACKS=[
+  {id:'a1-1',level:'A1',title:'Nhóm 1: đời sống cơ bản',tag:'A1 · nhóm 1',words:`
+family | /ˈfæməli/ | gia đình | I love my family.
+friend | /frend/ | bạn bè | She is my best friend.
+house | /haʊs/ | ngôi nhà | We live in a small house.
+water | /ˈwɔːtə(r)/ | nước | Can I have some water?
+food | /fuːd/ | đồ ăn | The food is delicious.
+book | /bʊk/ | quyển sách | I read a book every week.
+school | /skuːl/ | trường học | The children go to school.
+teacher | /ˈtiːtʃə(r)/ | giáo viên | My teacher is very kind.
+happy | /ˈhæpi/ | vui, hạnh phúc | I am happy today.
+big | /bɪɡ/ | to, lớn | It is a big city.
+small | /smɔːl/ | nhỏ | He has a small dog.
+eat | /iːt/ | ăn | We eat dinner at seven.
+drink | /drɪŋk/ | uống | I drink coffee in the morning.
+go | /ɡəʊ/ | đi | I go to work by bus.
+like | /laɪk/ | thích | I like music.`},
+  {id:'a2-1',level:'A2',title:'Nhóm 1: công việc hằng ngày',tag:'A2 · nhóm 1',words:`
+schedule | /ˈskedʒuːl/ | lịch trình | Let me check my schedule.
+deadline | /ˈdedlaɪn/ | hạn chót | We must meet the deadline.
+available | /əˈveɪləbl/ | rảnh, có sẵn | Are you available tomorrow?
+improve | /ɪmˈpruːv/ | cải thiện | I want to improve my English.
+meeting | /ˈmiːtɪŋ/ | cuộc họp | The meeting starts at nine.
+colleague | /ˈkɒliːɡ/ | đồng nghiệp | My colleague helped me.
+receive | /rɪˈsiːv/ | nhận được | I received your email.
+prepare | /prɪˈpeə(r)/ | chuẩn bị | She is preparing a report.
+appointment | /əˈpɔɪntmənt/ | cuộc hẹn | I have a doctor's appointment.
+customer | /ˈkʌstəmə(r)/ | khách hàng | The customer is always right.`}
+];
+const packWords=p=>p.words.trim().split('\n').map(l=>{const [en,ipa,vi,ex]=l.split('|').map(s=>s.trim());return{en,ipa,vi,ex}});
+const hasWord=en=>S.items.some(i=>i.en.toLowerCase()===en.toLowerCase());
+function openPacks(){
+  const f=$('#form'),d=$('#dlg'),openSet=new Set();
+  const draw=()=>{
+    f.innerHTML=`<h1>📦 Kho từ theo mức</h1><div class="muted">Thêm gói nào bạn đã học xong. Từ trùng với thư viện sẽ được bỏ qua.</div>
+    ${[...new Set(PACKS.map(p=>p.level))].map(lv=>`<h2>${lv}</h2>${PACKS.filter(p=>p.level===lv).map(p=>{
+      const w=packWords(p),have=w.filter(x=>hasWord(x.en)).length;
+      const open=openSet.has(p.id);
+      return `<div class="card"><div class="row"><div class="sp"><b>${esc(p.title)}</b><div class="muted">${have}/${w.length} từ đã có</div></div>
+      <button type="button" class="sm" data-vw="${p.id}" aria-expanded="${open}">${open?'Ẩn':'👁 Xem & nghe'}</button>
+      <button type="button" class="${have===w.length?'':'pri'}" data-pk="${p.id}" ${have===w.length?'disabled':''}>${have===w.length?'✓ Đã thêm':'+ Thêm gói'}</button></div>
+      ${open?w.map((x,k)=>`<div class="row" style="border-top:1px solid var(--line);padding:6px 0;margin-top:6px"><div class="sp"><b>${esc(x.en)}</b> <span class="ipa">${esc(x.ipa)}</span>
+        <div>${esc(x.vi)}</div><div class="ex" style="font-size:14px">${esc(x.ex)}</div></div>
+        <button type="button" class="sm" data-pw="${esc(x.en)}" aria-label="Nghe ${esc(x.en)}">🔊</button></div>`).join(''):''}</div>`}).join('')}`).join('')}
+    <div class="row" style="margin-top:14px"><span class="sp"></span><button value="cancel">Đóng</button></div>`;
+    f.querySelectorAll('[data-vw]').forEach(b=>b.onclick=()=>{const id=b.dataset.vw;openSet.has(id)?openSet.delete(id):openSet.add(id);draw()});
+    f.querySelectorAll('[data-pw]').forEach(b=>b.onclick=()=>speak(b.dataset.pw,.85,true));
+    f.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{
+      const p=PACKS.find(x=>x.id===b.dataset.pk);let n=0;
+      packWords(p).forEach(w=>{if(hasWord(w.en))return;
+        S.items.push({id:'w-'+w.en.toLowerCase().replace(/[^a-z0-9]+/g,'-'),type:'word',en:w.en,ipa:w.ipa,vi:w.vi,ex:w.ex,tag:p.tag,box:0,due:0,ok:0,no:0,at:Date.now()});n++});
+      save();toast(`Đã thêm ${n} từ`);draw()});
+  };
+  draw();d.returnValue='';d.showModal();
+  d.onclose=()=>{d.onclose=null;if(tab==='lib')vLib()};
+}
+
 /* ===== Thư viện (thêm/sửa/xoá) ===== */
 function vLib(){
   const tags=[...new Set(S.items.map(i=>i.tag).filter(Boolean))].sort();
   const q=norm(ui.q);
   const list=S.items.filter(i=>(ui.filter==='all'||i.type===ui.filter)&&(!ui.tag||i.tag===ui.tag)&&
     (!q||norm(i.en+' '+i.vi+' '+(i.ex||'')).includes(q))).sort((a,b)=>b.at-a.at);
-  $('#app').innerHTML=`<div class="row"><h1 class="sp">Thư viện (${S.items.length})</h1><button class="pri" id="add">+ Thêm</button></div>
+  $('#app').innerHTML=`<div class="row"><h1 class="sp">Thư viện (${S.items.length})</h1><button id="pk">📦 Kho từ</button><button class="pri" id="add">+ Thêm</button></div>
   <input id="q" type="search" placeholder="Tìm từ, nghĩa, ví dụ…" value="${esc(ui.q)}" style="margin:8px 0">
   <div class="seg">${[['all','Tất cả'],...Object.entries(TYPES)].map(([k,l])=>`<button data-f="${k}" aria-pressed="${ui.filter===k}">${l}</button>`).join('')}</div>
   ${tags.length?`<select id="tag" style="margin-top:8px"><option value="">Mọi chủ đề</option>${tags.map(t=>`<option ${t===ui.tag?'selected':''}>${esc(t)}</option>`).join('')}</select>`:''}
@@ -283,7 +342,7 @@ function vLib(){
     <div style="display:flex;flex-direction:column;gap:6px"><button class="sm" data-say="${it.id}" aria-label="Nghe">🔊</button>
     <button class="sm" data-edit="${it.id}" aria-label="Sửa">✏️</button><button class="sm bad" data-del="${it.id}" aria-label="Xoá">🗑</button></div></div>`).join('')
     ||'<div class="card muted">Chưa có mục nào khớp. Bấm “+ Thêm”.</div>'}</div>`;
-  $('#add').onclick=()=>edit();
+  $('#add').onclick=()=>edit();$('#pk').onclick=openPacks;
   $('#q').oninput=e=>{ui.q=e.target.value;const p=e.target.selectionStart;vLib();const n=$('#q');n.focus();n.setSelectionRange(p,p)};
   document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ui.filter=b.dataset.f;vLib()});
   const t=$('#tag');if(t)t.onchange=()=>{ui.tag=t.value;vLib()};
