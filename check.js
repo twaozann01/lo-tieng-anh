@@ -41,5 +41,14 @@ ok('index.html không nhúng service_role key', !/service_role/i.test(html));
 ok('token đồng bộ ở khoá riêng, không nằm trong S', /const SK='english-lab-sync'/.test(js));
 ok('seed có id cố định (tránh nhân đôi khi đồng bộ)', /'seed-i'\+k/.test(js) && /seed-t0/.test(js) && /seed-n0/.test(js));
 
+// kho từ: id gói không trùng, mỗi dòng đủ 4 phần "en | phiên âm | nghĩa | ví dụ", không trùng từ giữa các gói
+const packSrc = (js.match(/const PACKS=\[([\s\S]*?)\n\];/) || [, ''])[1];
+const packIds = [...packSrc.matchAll(/\{id:'([^']+)'/g)].map(x => x[1]);
+const packLines = [...packSrc.matchAll(/^\S[^\n]* \| [^\n]*$/gm)].map(x => x[0]);
+const packEn = packLines.map(l => l.split('|')[0].trim().toLowerCase());
+ok('kho từ: id gói không trùng', new Set(packIds).size === packIds.length && packIds.length > 0);
+ok('kho từ: mỗi dòng đủ 4 phần', packLines.every(l => l.split('|').length === 4 && l.split('|').every(p => p.trim())));
+ok('kho từ: không trùng từ giữa các gói', new Set(packEn).size === packEn.length);
+
 console.log(fail ? `\n${fail} mục lỗi` : '\nTất cả xanh');
 process.exit(fail ? 1 : 0);
